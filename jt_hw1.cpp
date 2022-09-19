@@ -31,7 +31,7 @@ struct Sphere {
   Refl_t refl; // reflection type (DIFFuse, SPECular, REFRactive)
   Sphere(double rad_, Vec p_, Vec e_, Vec c_, Refl_t refl_)
       : rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
-  double intersect(const Ray &r) const { // returns distance, 0 if nohit
+  double intersect(const auto &r) const { // returns distance, 0 if nohit
     auto op = p - r.o; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
     double t, eps = 1e-4, b = op.dot(r.d), det = b * b - op.dot(op) + rad * rad;
     if (det < 0)
@@ -68,7 +68,7 @@ inline auto intersect(const Ray &r, double &t, int &id) {
     }
   return t < inf;
 }
-auto radiance(const Ray &r, int depth, unsigned short *Xi) {
+auto radiance(const auto &r, auto depth, auto *Xi) {
   double t;   // distance to intersection
   auto id = 0; // id of intersected object
   if (!intersect(r, t, id))
@@ -93,8 +93,9 @@ auto radiance(const Ray &r, int depth, unsigned short *Xi) {
            f.mult(radiance(Ray(x, r.d - n * 2 * n.dot(r.d)), depth, Xi));
   Ray reflRay(x, r.d - n * 2 * n.dot(r.d)); // Ideal dielectric REFRACTION
   auto into = n.dot(nl) > 0;                // Ray from outside going in?
-  double nc = 1, nt = 1.5, nnt = into ? nc / nt : nt / nc, ddn = r.d.dot(nl),
-         cos2t;
+  double nc = 1;
+  auto nt = 1.5, nnt = into ? nc / nt : nt / nc, ddn = r.d.dot(nl);
+  double cos2t;
   if ((cos2t = 1 - nnt * nnt * (1 - ddn * ddn)) <
       0) // Total internal reflection
     return obj.e + f.mult(radiance(reflRay, depth, Xi));
@@ -115,8 +116,8 @@ auto radiance(const Ray &r, int depth, unsigned short *Xi) {
 int main(int argc, char *argv[]) {
   auto w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 4; // # samples
   Ray cam(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm()); // cam pos, dir
-  Vec cx = Vec(w * .5135 / h), cy = (cx % cam.d).norm() * .5135, r,
-      *c = new Vec[w * h];
+  auto cx = Vec(w * .5135 / h), cy = (cx % cam.d).norm() * .5135, *c = new Vec[w * h];
+  Vec r;
 #pragma omp parallel for schedule(dynamic, 1) private(r) // OpenMP
   for (auto y = 0; y < h; y++) {                          // Loop over image rows
     fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps *1,
