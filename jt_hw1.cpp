@@ -8,32 +8,33 @@ struct Vec {        // Usage: time ./smallpt 5000 && xv image.ppm
     y = y_;
     z = z_;
   }
-  auto operator+(const Vec &b) const { return Vec(x + b.x, y + b.y, z + b.z); }
-  auto operator-(const Vec &b) const { return Vec(x - b.x, y - b.y, z - b.z); }
-  auto operator*(double b) const { return Vec(x * b, y * b, z * b); }
-  auto mult(const Vec &b) const { return Vec(x * b.x, y * b.y, z * b.z); }
+  auto operator+(const auto &b) const { return Vec(x + b.x, y + b.y, z + b.z); }
+  auto operator-(const auto &b) const { return Vec(x - b.x, y - b.y, z - b.z); }
+  auto operator*(auto b) const { return Vec(x * b, y * b, z * b); }
+  auto mult(const auto &b) const { return Vec(x * b.x, y * b.y, z * b.z); }
   auto &norm() { return *this = *this * (1 / sqrt(x * x + y * y + z * z)); }
-  auto dot(const Vec &b) const {
+  auto dot(const auto &b) const {
     return x * b.x + y * b.y + z * b.z;
   } // cross:
-  auto operator%(Vec &b) {
+  auto operator%(auto &b) {
     return Vec(y * b.z - z * b.y, z * b.x - x * b.z, x * b.y - y * b.x);
   }
 };
 struct Ray {
   Vec o, d;
-  Ray(Vec o_, Vec d_) : o(o_), d(d_) {}
+  Ray(auto o_, auto d_) : o(o_), d(d_) {}
 };
 enum Refl_t { DIFF, SPEC, REFR }; // material types, used in radiance()
 struct Sphere {
   double rad;  // radius
   Vec p, e, c; // position, emission, color
   Refl_t refl; // reflection type (DIFFuse, SPECular, REFRactive)
-  Sphere(double rad_, Vec p_, Vec e_, Vec c_, Refl_t refl_)
+  Sphere(auto rad_, auto p_, auto e_, auto c_, auto refl_)
       : rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
   double intersect(const auto &r) const { // returns distance, 0 if nohit
     auto op = p - r.o; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
-    double t, eps = 1e-4, b = op.dot(r.d), det = b * b - op.dot(op) + rad * rad;
+    double t;
+    auto eps = 1e-4, b = op.dot(r.d), det = b * b - op.dot(op) + rad * rad;
     if (det < 0)
       return 0;
     else
@@ -57,10 +58,12 @@ Sphere spheres[] = {
     Sphere(600, Vec(50, 681.6 - .27, 81.6), Vec(12, 12, 12), Vec(),
            DIFF) // Lite
 };
-inline auto clamp(double x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
-inline auto toInt(double x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
-inline auto intersect(const Ray &r, double &t, int &id) {
-  double n = sizeof(spheres) / sizeof(Sphere), d, inf = t = 1e20;
+inline auto clamp(auto x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+inline auto toInt(auto x) { return int(pow(clamp(x), 1 / 2.2) * 255 + .5); }
+inline auto intersect(const auto &r, auto &t, auto &id) {
+  auto n = sizeof(spheres) / sizeof(Sphere);
+  auto inf = t = 1e20;
+  double d;
   for (auto i = int(n); i--;)
     if ((d = spheres[i].intersect(r)) && d < t) {
       t = d;
@@ -91,7 +94,7 @@ auto radiance(const auto &r, auto depth, auto *Xi) {
   } else if (obj.refl == SPEC) // Ideal SPECULAR reflection
     return obj.e +
            f.mult(radiance(Ray(x, r.d - n * 2 * n.dot(r.d)), depth, Xi));
-  Ray reflRay(x, r.d - n * 2 * n.dot(r.d)); // Ideal dielectric REFRACTION
+  auto reflRay = Ray(x, r.d - n * 2 * n.dot(r.d)); // Ideal dielectric REFRACTION
   auto into = n.dot(nl) > 0;                // Ray from outside going in?
   double nc = 1;
   auto nt = 1.5, nnt = into ? nc / nt : nt / nc, ddn = r.d.dot(nl);
@@ -115,7 +118,7 @@ auto radiance(const auto &r, auto depth, auto *Xi) {
 }
 int main(int argc, char *argv[]) {
   auto w = 1024, h = 768, samps = argc == 2 ? atoi(argv[1]) / 4 : 4; // # samples
-  Ray cam(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm()); // cam pos, dir
+  auto cam = Ray(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm()); // cam pos, dir
   auto cx = Vec(w * .5135 / h), cy = (cx % cam.d).norm() * .5135, *c = new Vec[w * h];
   Vec r;
 #pragma omp parallel for schedule(dynamic, 1) private(r) // OpenMP
