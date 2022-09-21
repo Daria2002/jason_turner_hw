@@ -1,4 +1,4 @@
 # jason_turner_hw
-Jason Turner Homeworks
-1st hw: 'auto' all the things
-2nd hw: 'const' all the things
+Jason Turner Homeworks <br />
+**1st hw**: 'auto' all the things <br />
+**2nd hw**: 'const' all the things <br />
