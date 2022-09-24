@@ -19,7 +19,9 @@ struct Vec {      // Usage: time ./smallpt 5000 && xv image.ppm
   auto operator-(const auto &b) const { return Vec(x - b.x, y - b.y, z - b.z); }
   auto operator*(auto b) const { return Vec(x * b, y * b, z * b); }
   auto mult(const auto &b) const { return Vec(x * b.x, y * b.y, z * b.z); }
-  const auto &norm() { return *this = *this * (1 / sqrt(x * x + y * y + z * z)); }
+  const auto &norm() {
+    return *this = *this * (1 / sqrt(x * x + y * y + z * z));
+  }
   auto dot(const auto &b) const {
     return x * b.x + y * b.y + z * b.z;
   } // cross:
@@ -42,10 +44,12 @@ struct Sphere {
   double intersect(const auto &r) const { // returns distance, 0 if nohit
     const auto op =
         p - r.o; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
-    const auto eps = 1e-4, b = op.dot(r.d);
-    if(b * b - op.dot(op) + rad * rad < 0) return 0;
+    constexpr auto eps = 1e-4;
+    const auto b = op.dot(r.d);
+    if (b * b - op.dot(op) + rad * rad < 0)
+      return 0;
     const auto det = sqrt(b * b - op.dot(op) + rad * rad);
-    return (b-det)>eps ? b-det : (b+det) > eps ? (b+det) : 0;
+    return (b - det) > eps ? b - det : (b + det) > eps ? (b + det) : 0;
   }
 };
 const Sphere spheres[] = {
@@ -70,7 +74,7 @@ inline auto toInt(const auto x) {
 }
 inline auto intersect(const auto &r, auto &t, auto &id) {
   const auto n = sizeof(spheres) / sizeof(Sphere);
-  const auto inf = 1e20;
+  constexpr auto inf = 1e20;
   t = 1e20;
   for (auto i = int(n); i--;)
     if (const auto d = spheres[i].intersect(r); d < t) {
@@ -80,7 +84,7 @@ inline auto intersect(const auto &r, auto &t, auto &id) {
   return t < inf;
 }
 auto radiance(const auto &r, auto depth, auto *Xi) {
-  double t;          // distance to intersection
+  double t;    // distance to intersection
   auto id = 0; // id of intersected object
   if (!intersect(r, t, id))
     return Vec();                // if miss, return black
@@ -108,8 +112,9 @@ auto radiance(const auto &r, auto depth, auto *Xi) {
   const auto reflRay =
       Ray(x, r.d - n * 2 * n.dot(r.d)); // Ideal dielectric REFRACTION
   const auto into = n.dot(nl) > 0;      // Ray from outside going in?
-  const auto nc = 1.0;
-  const auto nt = 1.5, nnt = into ? nc / nt : nt / nc, ddn = r.d.dot(nl);
+  constexpr auto nc = 1.0;
+  constexpr auto nt = 1.5;
+  const auto nnt = into ? nc / nt : nt / nc, ddn = r.d.dot(nl);
   const auto cos2t = 1 - nnt * nnt * (1 - ddn * ddn);
   if (cos2t < 0) // Total internal reflection
     return obj.e + f.mult(radiance(reflRay, depth, Xi));
@@ -128,8 +133,8 @@ auto radiance(const auto &r, auto depth, auto *Xi) {
                           radiance(Ray(x, tdir), depth, Xi) * Tr);
 }
 int main(int argc, char *argv[]) {
-  const auto w = 1024, h = 768,
-       samps = argc == 2 ? atoi(argv[1]) / 4 : 4; // # samples
+  constexpr auto w = 1024, h = 768;
+  const auto samps = argc == 2 ? atoi(argv[1]) / 4 : 4; // # samples
   const auto cam =
       Ray(Vec(50, 52, 295.6), Vec(0, -0.042612, -1).norm()); // cam pos, dir
   const auto cx = Vec(w * .5135 / h);
@@ -147,9 +152,9 @@ int main(int argc, char *argv[]) {
         for (auto sx = 0; sx < 2; sx++, r = Vec()) { // 2x2 subpixel cols
           for (auto s = 0; s < samps; s++) {
             const auto r1 = 2 * erand48(Xi),
-                 dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
+                       dx = r1 < 1 ? sqrt(r1) - 1 : 1 - sqrt(2 - r1);
             const auto r2 = 2 * erand48(Xi),
-                 dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
+                       dy = r2 < 1 ? sqrt(r2) - 1 : 1 - sqrt(2 - r2);
             auto d = cx * (((sx + .5 + dx) / 2 + x) / w - .5) +
                      cy * (((sy + .5 + dy) / 2 + y) / h - .5) + cam.d;
             r = r +
