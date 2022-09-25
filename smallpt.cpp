@@ -29,6 +29,7 @@ struct Vec {      // Usage: time ./smallpt 5000 && xv image.ppm
     return Vec(y * b.z - z * b.y, z * b.x - x * b.z, x * b.y - y * b.x);
   }
 };
+
 struct Ray {
   Vec o, d;
   Ray(const auto o_, const auto d_) : o(o_), d(d_) {}
@@ -68,11 +69,10 @@ const Sphere spheres[] = {
     Sphere(600, Vec(50, 681.6 - .27, 81.6), Vec(12, 12, 12), Vec(),
            DIFF) // Lite
 };
-inline auto clamp(const auto x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
-inline auto toInt(const auto x) {
-  return int(pow(clamp(x), 1 / 2.2) * 255 + .5);
-}
-inline auto intersect(const auto &r, auto &t, auto &id) {
+auto clamp = [](const auto x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
+auto toInt = [](const auto x) { return int(pow(clamp(x), 1/2.2) * 255 + .5);};
+
+auto intersect = [](const auto &r, auto &t, auto &id) {
   const auto n = sizeof(spheres) / sizeof(Sphere);
   constexpr auto inf = 1e20;
   t = 1e20;
@@ -82,8 +82,8 @@ inline auto intersect(const auto &r, auto &t, auto &id) {
       id = i;
     }
   return t < inf;
-}
-auto radiance(const auto &r, auto depth, auto *Xi) {
+};
+auto radiance = [](const auto &r, auto depth, auto *Xi) {
   double t;    // distance to intersection
   auto id = 0; // id of intersected object
   if (!intersect(r, t, id))
@@ -131,7 +131,7 @@ auto radiance(const auto &r, auto depth, auto *Xi) {
                                        : radiance(Ray(x, tdir), depth, Xi) * TP)
                     : radiance(reflRay, depth, Xi) * Re +
                           radiance(Ray(x, tdir), depth, Xi) * Tr);
-}
+};
 int main(int argc, char *argv[]) {
   constexpr auto w = 1024, h = 768;
   const auto samps = argc == 2 ? atoi(argv[1]) / 4 : 4; // # samples
